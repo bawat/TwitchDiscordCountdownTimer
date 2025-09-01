@@ -12,7 +12,7 @@ const CONFIG = {
     CHANNEL_ID: process.env.CHANNEL_ID, // Your #stream-info channel ID
     MESSAGE_ID: process.env.MESSAGE_ID, // The message ID you want to update (optional - bot can create one)
     TWITCH_URL: 'https://www.twitch.tv/TheGoldenLantern',
-    TIMEZONE: 'Europe/London', // Adjust to your timezone
+    TIMEZONE: 'America/New_York', // Adjust to your timezone
     STREAM_DAYS: [
         { day: 1, time: 14 }, // Monday 2pm (day 1 = Monday, 0 = Sunday)
         { day: 3, time: 14 }, // Wednesday 2pm  
@@ -133,6 +133,20 @@ async function updateStreamMessage() {
         const channel = await client.channels.fetch(CONFIG.CHANNEL_ID);
         if (!channel) {
             console.error('Channel not found!');
+            return;
+        }
+
+        // Debug permissions
+        const permissions = channel.permissionsFor(client.user);
+        console.log('🔍 Bot permissions in channel:');
+        console.log('  - View Channel:', permissions.has('ViewChannel'));
+        console.log('  - Send Messages:', permissions.has('SendMessages'));
+        console.log('  - Embed Links:', permissions.has('EmbedLinks'));
+        console.log('  - Read Message History:', permissions.has('ReadMessageHistory'));
+        console.log('  - Use External Emojis:', permissions.has('UseExternalEmojis'));
+
+        if (!permissions.has('SendMessages')) {
+            console.error('❌ Bot does not have Send Messages permission in this channel!');
             return;
         }
 
