@@ -1,0 +1,19 @@
+{
+  "name": "discord-stream-countdown-bot",
+  "version": "1.0.0",
+  "description": "Discord bot that updates stream countdown message",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "node-cron": "^3.0.3"
+  },
+  "engines": {
+    "node": "18.x"
+  },
+  "keywords": ["discord", "bot", "twitch", "stream", "countdown"],
+  "author": "Mark Macheta",
+  "license": "MIT"
+}
