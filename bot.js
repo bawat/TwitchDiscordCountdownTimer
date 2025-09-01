@@ -165,7 +165,7 @@ async function updateStreamMessage() {
 }
 
 // Bot ready event
-client.once('ready', () => {
+client.once('clientReady', () => {
     console.log('🤖 Stream countdown bot is online!');
     console.log(`📺 Monitoring streams for: ${CONFIG.TWITCH_URL}`);
     console.log(`📅 Stream schedule: Mon/Wed/Fri at 2pm for ${CONFIG.STREAM_DURATION_HOURS} hours`);
