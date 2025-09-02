@@ -91,40 +91,11 @@ function formatTimeRemaining(targetDate) {
 // Generate the message content
 function generateMessageContent() {
     if (isCurrentlyStreaming()) {
-        return {
-            embeds: [{
-                title: "🔴 STREAMING NOW!",
-                description: `**Currently live on Twitch!**\n\n[**🎮 Watch Stream**](${CONFIG.TWITCH_URL})`,
-                color: 0x9146FF, // Twitch purple
-                timestamp: new Date(),
-                footer: {
-                    text: "Stream ends in " + (CONFIG.STREAM_DURATION_HOURS - (new Date().getHours() % CONFIG.STREAM_DURATION_HOURS)) + " hours"
-                }
-            }]
-        };
+        return `🔴 Streaming now at ${CONFIG.TWITCH_URL}`;
     } else {
         const nextStream = getNextStreamTime();
-        const timeRemaining = formatTimeRemaining(nextStream);
-        const streamDate = nextStream.toLocaleDateString('en-US', { 
-            weekday: 'long', 
-            month: 'short', 
-            day: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit',
-            timeZoneName: 'short'
-        });
-        
-        return {
-            embeds: [{
-                title: "⏰ Next Stream Countdown",
-                description: `**Next stream:** ${streamDate}\n**Time remaining:** ${timeRemaining}\n\n[**🔔 Follow on Twitch**](${CONFIG.TWITCH_URL})`,
-                color: 0x5865F2, // Discord blue
-                timestamp: nextStream,
-                footer: {
-                    text: "Updates automatically • Mon/Wed/Fri 2pm"
-                }
-            }]
-        };
+        const unixTimestamp = Math.floor(nextStream.getTime() / 1000);
+        return `Next stream: <t:${unixTimestamp}:R>`;
     }
 }
 
@@ -162,39 +133,17 @@ async function updateStreamMessage() {
             } catch (error) {
                 console.log('❌ Could not update message, creating new one...');
                 // Create new message if update fails
-                try {
-                    const newMessage = await channel.send(messageContent);
-                    targetMessageId = newMessage.id;
-                    console.log('✅ New message created with ID:', targetMessageId);
-                    console.log('🔧 Add this MESSAGE_ID to your environment variables:', targetMessageId);
-                } catch (sendError) {
-                    console.error('❌ Failed to send embed message, trying simple text...');
-                    // Fallback to simple text if embeds fail
-                    const simpleMessage = isCurrentlyStreaming() 
-                        ? `🔴 STREAMING NOW! ${CONFIG.TWITCH_URL}`
-                        : `⏰ Next stream: ${getNextStreamTime().toLocaleString()} - ${CONFIG.TWITCH_URL}`;
-                    const newMessage = await channel.send(simpleMessage);
-                    targetMessageId = newMessage.id;
-                    console.log('✅ Simple message created with ID:', targetMessageId);
-                }
-            }
-        } else {
-            // Create new message
-            try {
                 const newMessage = await channel.send(messageContent);
                 targetMessageId = newMessage.id;
                 console.log('✅ New message created with ID:', targetMessageId);
                 console.log('🔧 Add this MESSAGE_ID to your environment variables:', targetMessageId);
-            } catch (sendError) {
-                console.error('❌ Failed to send embed message, trying simple text...');
-                // Fallback to simple text if embeds fail
-                const simpleMessage = isCurrentlyStreaming() 
-                    ? `🔴 STREAMING NOW! ${CONFIG.TWITCH_URL}`
-                    : `⏰ Next stream: ${getNextStreamTime().toLocaleString()} - ${CONFIG.TWITCH_URL}`;
-                const newMessage = await channel.send(simpleMessage);
-                targetMessageId = newMessage.id;
-                console.log('✅ Simple message created with ID:', targetMessageId);
             }
+        } else {
+            // Create new message
+            const newMessage = await channel.send(messageContent);
+            targetMessageId = newMessage.id;
+            console.log('✅ New message created with ID:', targetMessageId);
+            console.log('🔧 Add this MESSAGE_ID to your environment variables:', targetMessageId);
         }
     } catch (error) {
         console.error('❌ Error updating stream message:', error);
@@ -211,9 +160,26 @@ client.once('clientReady', () => {
     updateStreamMessage();
 });
 
-// Schedule updates every 5 minutes
-cron.schedule('*/5 * * * *', () => {
-    console.log('🔄 Scheduled update triggered');
+// Schedule updates at specific times
+// 1pm daily
+cron.schedule('0 13 * * *', () => {
+    console.log('🔄 1pm daily update triggered');
+    updateStreamMessage();
+}, {
+    timezone: CONFIG.TIMEZONE
+});
+
+// 2pm daily (stream start time)
+cron.schedule('0 14 * * *', () => {
+    console.log('🔄 2pm stream time update triggered');
+    updateStreamMessage();
+}, {
+    timezone: CONFIG.TIMEZONE
+});
+
+// 6pm daily
+cron.schedule('0 18 * * *', () => {
+    console.log('🔄 6pm daily update triggered');
     updateStreamMessage();
 }, {
     timezone: CONFIG.TIMEZONE
