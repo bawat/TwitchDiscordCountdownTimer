@@ -30,28 +30,41 @@ function getNextStreamTime() {
     let nextStream = null;
     let minDiff = Infinity;
 
+    console.log('🔍 Current time:', now.toString());
+    console.log('🔍 Current day:', now.getDay(), '| Current hour:', now.getHours());
+
     for (const streamDay of CONFIG.STREAM_DAYS) {
         // Calculate next occurrence of this stream day
         const nextDate = new Date(now);
         nextDate.setHours(streamDay.time, 0, 0, 0);
         
+        console.log(`🔍 Checking stream day ${streamDay.day} at hour ${streamDay.time}`);
+        console.log(`🔍 Set to: ${nextDate.toString()}`);
+        
         // Get days until this weekday
         const daysUntil = (streamDay.day - now.getDay() + 7) % 7;
+        console.log(`🔍 Days until this stream: ${daysUntil}`);
         
         if (daysUntil === 0 && now.getHours() >= streamDay.time + CONFIG.STREAM_DURATION_HOURS) {
             // Stream already ended today, get next week's stream
             nextDate.setDate(nextDate.getDate() + 7);
+            console.log(`🔍 Stream ended today, moved to next week: ${nextDate.toString()}`);
         } else if (daysUntil > 0) {
             nextDate.setDate(nextDate.getDate() + daysUntil);
+            console.log(`🔍 Moved to correct day: ${nextDate.toString()}`);
         }
         
         const diff = nextDate.getTime() - now.getTime();
+        console.log(`🔍 Time difference: ${diff}ms (${diff/1000/60/60} hours)`);
+        
         if (diff > 0 && diff < minDiff) {
             minDiff = diff;
             nextStream = nextDate;
+            console.log(`🔍 New closest stream: ${nextStream.toString()}`);
         }
     }
 
+    console.log('🔍 Final next stream:', nextStream ? nextStream.toString() : 'null');
     return nextStream;
 }
 
