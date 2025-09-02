@@ -95,7 +95,20 @@ function generateMessageContent() {
     } else {
         const nextStream = getNextStreamTime();
         const unixTimestamp = Math.floor(nextStream.getTime() / 1000);
-        return `Next stream: <t:${unixTimestamp}:R>`;
+        
+        // Format the date and time
+        const dateString = nextStream.toLocaleDateString('en-US', { 
+            month: 'long', 
+            day: 'numeric', 
+            year: 'numeric' 
+        });
+        const timeString = nextStream.toLocaleTimeString('en-US', { 
+            hour: 'numeric', 
+            minute: '2-digit',
+            hour12: true 
+        });
+        
+        return `Next stream is at ${dateString} at ${timeString}, that's <t:${unixTimestamp}:R>!`;
     }
 }
 
