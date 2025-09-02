@@ -1,5 +1,6 @@
-const { Client, GatewayIntentBits } = require('discord.js');
+const { Client, GatewayIntentBits, PermissionFlagsBits } = require('discord.js');
 const cron = require('node-cron');
+const http = require('http');
 
 // Bot configuration
 const client = new Client({
@@ -139,13 +140,13 @@ async function updateStreamMessage() {
         // Debug permissions
         const permissions = channel.permissionsFor(client.user);
         console.log('🔍 Bot permissions in channel:');
-        console.log('  - View Channel:', permissions.has('ViewChannel'));
-        console.log('  - Send Messages:', permissions.has('SendMessages'));
-        console.log('  - Embed Links:', permissions.has('EmbedLinks'));
-        console.log('  - Read Message History:', permissions.has('ReadMessageHistory'));
-        console.log('  - Use External Emojis:', permissions.has('UseExternalEmojis'));
+        console.log('  - View Channel:', permissions.has(PermissionFlagsBits.ViewChannel));
+        console.log('  - Send Messages:', permissions.has(PermissionFlagsBits.SendMessages));
+        console.log('  - Embed Links:', permissions.has(PermissionFlagsBits.EmbedLinks));
+        console.log('  - Read Message History:', permissions.has(PermissionFlagsBits.ReadMessageHistory));
+        console.log('  - Use External Emojis:', permissions.has(PermissionFlagsBits.UseExternalEmojis));
 
-        if (!permissions.has('SendMessages')) {
+        if (!permissions.has(PermissionFlagsBits.SendMessages)) {
             console.error('❌ Bot does not have Send Messages permission in this channel!');
             return;
         }
@@ -161,17 +162,39 @@ async function updateStreamMessage() {
             } catch (error) {
                 console.log('❌ Could not update message, creating new one...');
                 // Create new message if update fails
+                try {
+                    const newMessage = await channel.send(messageContent);
+                    targetMessageId = newMessage.id;
+                    console.log('✅ New message created with ID:', targetMessageId);
+                    console.log('🔧 Add this MESSAGE_ID to your environment variables:', targetMessageId);
+                } catch (sendError) {
+                    console.error('❌ Failed to send embed message, trying simple text...');
+                    // Fallback to simple text if embeds fail
+                    const simpleMessage = isCurrentlyStreaming() 
+                        ? `🔴 STREAMING NOW! ${CONFIG.TWITCH_URL}`
+                        : `⏰ Next stream: ${getNextStreamTime().toLocaleString()} - ${CONFIG.TWITCH_URL}`;
+                    const newMessage = await channel.send(simpleMessage);
+                    targetMessageId = newMessage.id;
+                    console.log('✅ Simple message created with ID:', targetMessageId);
+                }
+            }
+        } else {
+            // Create new message
+            try {
                 const newMessage = await channel.send(messageContent);
                 targetMessageId = newMessage.id;
                 console.log('✅ New message created with ID:', targetMessageId);
                 console.log('🔧 Add this MESSAGE_ID to your environment variables:', targetMessageId);
+            } catch (sendError) {
+                console.error('❌ Failed to send embed message, trying simple text...');
+                // Fallback to simple text if embeds fail
+                const simpleMessage = isCurrentlyStreaming() 
+                    ? `🔴 STREAMING NOW! ${CONFIG.TWITCH_URL}`
+                    : `⏰ Next stream: ${getNextStreamTime().toLocaleString()} - ${CONFIG.TWITCH_URL}`;
+                const newMessage = await channel.send(simpleMessage);
+                targetMessageId = newMessage.id;
+                console.log('✅ Simple message created with ID:', targetMessageId);
             }
-        } else {
-            // Create new message
-            const newMessage = await channel.send(messageContent);
-            targetMessageId = newMessage.id;
-            console.log('✅ New message created with ID:', targetMessageId);
-            console.log('🔧 Add this MESSAGE_ID to your environment variables:', targetMessageId);
         }
     } catch (error) {
         console.error('❌ Error updating stream message:', error);
@@ -198,6 +221,17 @@ cron.schedule('*/5 * * * *', () => {
 
 // Handle errors
 client.on('error', console.error);
+
+// Simple web server to keep Render happy (only needed for Web Service type)
+const server = http.createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('Discord Stream Bot is running!');
+});
+
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+    console.log(`🌐 Health check server running on port ${PORT}`);
+});
 
 // Login to Discord
 client.login(CONFIG.BOT_TOKEN);
