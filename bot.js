@@ -13,7 +13,7 @@ const CONFIG = {
     CHANNEL_ID: process.env.CHANNEL_ID, // Your #stream-info channel ID
     MESSAGE_ID: process.env.MESSAGE_ID, // The message ID you want to update (optional - bot can create one)
     TWITCH_URL: 'https://www.twitch.tv/TheGoldenLantern',
-    TIMEZONE: 'America/New_York', // Adjust to your timezone
+    TIMEZONE: 'Europe/London', // Adjust to your timezone
     STREAM_DAYS: [
         { day: 1, time: 14 }, // Monday 2pm (day 1 = Monday, 0 = Sunday)
         { day: 3, time: 14 }, // Wednesday 2pm  
@@ -96,19 +96,7 @@ function generateMessageContent() {
         const nextStream = getNextStreamTime();
         const unixTimestamp = Math.floor(nextStream.getTime() / 1000);
         
-        // Format the date and time
-        const dateString = nextStream.toLocaleDateString('en-US', { 
-            month: 'long', 
-            day: 'numeric', 
-            year: 'numeric' 
-        });
-        const timeString = nextStream.toLocaleTimeString('en-US', { 
-            hour: 'numeric', 
-            minute: '2-digit',
-            hour12: true 
-        });
-        
-        return `Next stream is at ${dateString} at ${timeString}, that's <t:${unixTimestamp}:R>!`;
+        return `Next stream is at <t:${unixTimestamp}:F>, that's <t:${unixTimestamp}:R>!`;
     }
 }
 
